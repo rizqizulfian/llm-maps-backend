@@ -5,10 +5,15 @@ A robust, enterprise-grade RESTful API built with Node.js, Express, and TypeScri
 ## ✨ Key Features
 
 * **🤖 AI-Optimized Responses:** Output is heavily formatted in Markdown, allowing LLMs to directly present beautiful, readable data (with emojis and clickable links) to the end user.
+<img width="886" height="424" alt="image" src="https://github.com/user-attachments/assets/4c2e5205-e42d-43ca-a8a7-ce90f7a7526a" />
+
+
 * **🛡️ Strict Type Safety:** Built 100% in TypeScript, utilizing custom interfaces and eliminating `any` types for maximum reliability.
 * **🏗️ Clean Architecture:** Follows the Separation of Concerns (SoC) principle, cleanly dividing Controllers, Routes, Types, and Utilities.
 * **🧪 Comprehensive Unit Testing:** Fully tested using **Jest** and `node-mocks-http` to ensure production-level stability (covering both happy and sad paths).
 * **📱 WhatsApp Deep Linking:** Automatically generates formatted WhatsApp share links for every location recommendation and route.
+<img width="886" height="424" alt="image" src="https://github.com/user-attachments/assets/1fc0e6c7-c033-48d2-96d5-796bcd0f35ac" />
+<img width="957" height="798" alt="image" src="https://github.com/user-attachments/assets/f0ecadad-b5f4-4ed7-b02b-5d440264df9e" />
 
 ## 🚀 Tech Stack
 
@@ -83,3 +88,5 @@ To test this integration:
 ## 🧪 Experimental: Model Context Protocol (MCP)
 
 In addition to the standard REST API and Open WebUI tool, this repository contains an experimental `mcp.js` file. This script is a beta exploration of the **[Model Context Protocol (MCP)](https://modelcontextprotocol.io/)**, designed to test direct, standardized tool-calling capabilities for next-generation LLM agents (like Claude Desktop or Cursor). Reviewers and recruiters are welcome to explore this file to see my ongoing R&D in modern AI integration!
+MCP Running Succes on MCP Inspector
+<img width="1470" height="797" alt="Screenshot 2026-03-24 at 21 35 13" src="https://github.com/user-attachments/assets/4c44ed7d-bf8a-441f-8231-f1eb8e5e7f8a" />
