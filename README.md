@@ -23,6 +23,11 @@ A robust, enterprise-grade RESTful API built with Node.js, Express, and TypeScri
 * **Testing:** Jest & ts-jest
 * **External API:** Google Maps API (Places & Directions)
 
+### 🔑 Prerequisites (Google Cloud Setup)
+Please ensure, you must enable the following services in your [Google Cloud Console](https://console.cloud.google.com/):
+* **Places API** (Required for `getLocation`)
+* **Directions API** (Required for `getRoute`)
+
 ## 📂 Project Structure
 
 ```text
