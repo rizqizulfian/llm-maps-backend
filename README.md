@@ -1,4 +1,4 @@
-# 🗺️ LLM Maps API (Open WebUI Integration)
+# 🗺️ LLM Maps API (Open WebUI & MCP Integration)
 
 A robust, enterprise-grade RESTful API built with Node.js, Express, and TypeScript. This backend is specifically designed to act as an intelligent tool for Large Language Models (LLMs) within Open WebUI, enabling AI to seamlessly fetch real-time Google Maps data, location recommendations, and navigation routes.
 
@@ -34,6 +34,8 @@ llm-maps-backend/
 │   ├── mapController.test.ts # Mocked controller unit tests
 │   └── mapHelpers.test.ts    # Utility unit tests
 ├── .env                      # Environment variables (Ignored in Git)
+├── mcp.js                    # 🧪 Experimental Model Context Protocol (MCP) script
+├── open_webui_tool.py        # Python script for Open WebUI integration
 ├── server.ts                 # Application entry point
 └── package.json
 ```
@@ -70,4 +72,14 @@ npm run test
 
 ## 🔗 Open WebUI Python Tool Integration
 
-This API is designed to be consumed by an LLM via a Python Tool function. The tool directly hits the endpoints `/api/get-location` and `/api/get-route`, passing the user's prompt as parameters and returning the highly formatted Markdown directly into the chat interface.
+This API is designed to be consumed by an LLM via a Python Tool function in Open WebUI. 
+
+To test this integration:
+1. Open your Open WebUI Workspace.
+2. Navigate to the **Tools** section and create a new tool.
+3. Copy the entire content of the [`open_webui_tool.py`](./open_webui_tool.py) file included in this repository and paste it into the tool editor.
+4. The LLM will automatically parse the docstrings and trigger the endpoints `/api/get-location` and `/api/get-route` whenever a user asks for map recommendations or navigation.
+
+## 🧪 Experimental: Model Context Protocol (MCP)
+
+In addition to the standard REST API and Open WebUI tool, this repository contains an experimental `mcp.js` file. This script is a beta exploration of the **[Model Context Protocol (MCP)](https://modelcontextprotocol.io/)**, designed to test direct, standardized tool-calling capabilities for next-generation LLM agents (like Claude Desktop or Cursor). Reviewers and recruiters are welcome to explore this file to see my ongoing R&D in modern AI integration!
