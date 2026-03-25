@@ -117,6 +117,7 @@ This repository includes a lightweight, fully functional ChatGPT-style web inter
 1. Ensure both your **Express Backend** (`npm start`) and **Ollama** (`ollama run llama3.1`) are running.
 2. Open the `index.html` file located in the root directory directly in your web browser (e.g., Chrome, Safari).
 3. Type a natural prompt like: *"Find me the best seafood restaurants in Batam Center"* and watch the AI extract the intent, fetch the map data, and render the UI!
+<img width="497" height="799" alt="image" src="https://github.com/user-attachments/assets/9a61e327-821b-4b33-ab00-a4ecbeda7931" />
 
 ### Approach B: Integrate with Open WebUI (Docker)
 If you prefer using a robust third-party LLM dashboard:
