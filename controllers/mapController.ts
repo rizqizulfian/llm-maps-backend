@@ -2,7 +2,7 @@
 
 import type { Request, Response } from 'express';
 import type { LocationRequestBody, RouteRequestBody, GooglePlace } from '../types/map.types';
-import { formatPrice, formatReview, getApiKey } from '../utils/mapHelpers';
+import { formatPrice, formatReview, getApiKey, generateStaticMapUrl } from '../utils/mapHelpers';
 
 export const getLocation = async (req: Request<{}, {}, LocationRequestBody>, res: Response): Promise<void> => {
     const { location, place_type } = req.body;
@@ -27,7 +27,7 @@ export const getLocation = async (req: Request<{}, {}, LocationRequestBody>, res
 
         const top5Places = searchData.results.slice(0, 5);
         const detailedPlaces: GooglePlace[] = await Promise.all(top5Places.map(async (place: { place_id: string }) => {
-            const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=name,formatted_address,rating,user_ratings_total,price_level,opening_hours,reviews,url&key=${apiKey}`;
+            const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=name,formatted_address,rating,user_ratings_total,price_level,opening_hours,reviews,url,geometry&key=${apiKey}`;
             const detailsRes = await fetch(detailsUrl);
             const detailsData = await detailsRes.json();
             return detailsData.result || place;
@@ -37,6 +37,13 @@ export const getLocation = async (req: Request<{}, {}, LocationRequestBody>, res
         let whatsappResult = `Here are the top 5 recommendations for *${place_type}* in *${location}*:\n\n`;
 
         detailedPlaces.forEach((item, index) => {
+            if (index === 0 && item.geometry) {
+                const staticMapUrl = generateStaticMapUrl(item, apiKey);
+                if (staticMapUrl) {
+                    markdownResult += `### 📍 Top Result Map\n\n![Map of ${item.name}](${staticMapUrl})\n\n---\n\n`;
+                }
+            }
+
             const ratingText = item.rating ? `${item.rating} ⭐ (${item.user_ratings_total})` : 'No rating yet';
             const priceText = formatPrice(item.price_level);
             const isOpenText = item.opening_hours?.open_now ? '🟢 Open Now' : '🔴 Closed / No info';

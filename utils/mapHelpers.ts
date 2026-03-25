@@ -1,6 +1,6 @@
 // utils/mapHelpers.ts
 
-import type { GoogleReview } from '../types/map.types';
+import type { GoogleReview, GooglePlace } from '../types/map.types';
 
 const PRICE_MAP = ['Free', 'Cheap ($)', 'Moderate ($$)', 'Expensive ($$$)', 'Very Expensive ($$$$)'];
 
@@ -18,4 +18,23 @@ export const getApiKey = (): string => {
     const key = process.env.GOOGLE_MAPS_API_KEY;
     if (!key) throw new Error("GOOGLE_MAPS_API_KEY is not configured in the .env file");
     return key;
+};
+
+export const generateStaticMapUrl = (place: GooglePlace, apiKey: string): string => {
+    if (!place.geometry?.location) return '';
+    
+    const lat = place.geometry.location.lat;
+    const lng = place.geometry.location.lng;
+    const center = `${lat},${lng}`;
+    
+    const baseUrl = 'https://maps.googleapis.com/maps/api/staticmap';
+    const params = [
+        `center=${encodeURIComponent(center)}`,
+        `zoom=16`,
+        `size=600x300`,
+        `markers=color:red%7C${encodeURIComponent(center)}`,
+        `key=${apiKey}`
+    ];
+
+    return `${baseUrl}?${params.join('&')}`;
 };

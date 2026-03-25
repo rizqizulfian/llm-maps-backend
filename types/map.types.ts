@@ -14,6 +14,15 @@ export interface GoogleReview {
     text: string;
 }
 
+export interface GooglePlaceLocation {
+    lat: number;
+    lng: number;
+}
+
+export interface GooglePlaceGeometry {
+    location: GooglePlaceLocation;
+}
+
 export interface GooglePlace {
     place_id: string;
     name: string;
@@ -24,4 +33,6 @@ export interface GooglePlace {
     opening_hours?: { open_now: boolean };
     reviews?: GoogleReview[];
     url?: string;
+    geometry?: GooglePlaceGeometry; // Tambahan untuk Static Map
+    types?: string[];
 }
