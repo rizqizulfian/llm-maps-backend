@@ -4,7 +4,8 @@ A robust, enterprise-grade RESTful API built with Node.js, Express, and TypeScri
 
 ## ✨ Key Features
 
-* **🤖 AI-Optimized Responses:** Output is heavily formatted in Markdown, allowing LLMs to directly present beautiful, readable data (with emojis and clickable links) to the end user.
+* **🤖 AI-Optimized Responses:** Output is heavily formatted in Markdown, allowing LLMs to directly present beautiful, readable data (with emojis and clickable links) and embed static map to the end user.
+<img width="658" height="377" alt="image" src="https://github.com/user-attachments/assets/0a333ffe-5b1c-45b8-8bf5-a092082617d8" />
 <img width="886" height="424" alt="image" src="https://github.com/user-attachments/assets/4c2e5205-e42d-43ca-a8a7-ce90f7a7526a" />
 
 * **🛡️ Strict Type Safety:** Built 100% in TypeScript, utilizing custom interfaces and eliminating `any` types for maximum reliability.
