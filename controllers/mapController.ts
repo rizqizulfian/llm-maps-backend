@@ -59,10 +59,10 @@ export const getLocation = async (req: Request<{}, {}, LocationRequestBody>, res
             const mapLink = item.url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.name + ' ' + item.formatted_address)}`;
             const dirLink = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(item.name)}&destination_place_id=${item.place_id}`;
 
-            markdownResult += `${index + 1}. **${item.name}**\n`;
-            markdownResult += `   📊 Rating: ${ratingText} | 💰 ${priceText} | ${isOpenText}\n`;
-            markdownResult += `   💬 *" ${reviewText} "*\n`;
-            markdownResult += `   📍 [Open Map](${mapLink}) | 🚗 [Get Directions](${dirLink})\n\n`;
+            markdownResult += `**${index + 1}. ${item.name}**\n`;
+            markdownResult += `📊 Rating: ${ratingText} | 💰 ${priceText} | ${isOpenText}\n`;
+            markdownResult += `💬 _" ${reviewText} "_\n`;
+            markdownResult += `📍 [Open Map](${mapLink}) | 🚗 [Get Directions](${dirLink})\n\n---\n\n`;
 
             whatsappResult += `${index + 1}. *${item.name}*\n`;
             whatsappResult += `   - Rating: ${ratingText} | Price: ${priceText} | Status: ${isOpenText}\n`;
@@ -128,5 +128,74 @@ export const getRoute = async (req: Request<{}, {}, RouteRequestBody>, res: Resp
     } catch (error) {
         console.error("Error in getRoute:", error);
         res.status(500).json({ error: 'A server error occurred while calculating the route.' });
+    }
+};
+
+export const chatWithAI = async (req: Request, res: Response): Promise<void> => {
+    const { prompt } = req.body;
+
+    if (!prompt) {
+        res.status(400).json({ error: 'Prompt is required' });
+        return;
+    }
+
+    try {
+        const ollamaRes = await fetch('http://localhost:11434/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                model: 'llama3.1',
+                messages: [{ role: 'user', content: prompt }],
+                stream: false,
+                tools: [{
+                    type: "function",
+                    function: {
+                        name: "search_google_maps",
+                        description: "Extract the exact search query parameters from the user's request.",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                place_type: {
+                                    type: "string",
+                                    description: "The EXACT raw food type, place name, or activity the user wants. Preserve the exact words (e.g., 'seafood', 'nasi padang', 'tukang cukur'). NEVER generalize or change the word to 'restaurant' or 'place'."
+                                },
+                                location: {
+                                    type: "string",
+                                    description: "The city, district, or area. If none is mentioned, default to 'Batam'."
+                                }
+                            },
+                            required: ["place_type", "location"]
+                        }
+                    }
+                }]
+            })
+        });
+
+        if (!ollamaRes.ok) throw new Error('Ollama is not responding');
+        
+        const ollamaData = await ollamaRes.json();
+
+        let extractedParams;
+        if (ollamaData.message?.tool_calls && ollamaData.message.tool_calls.length > 0) {
+            extractedParams = ollamaData.message.tool_calls[0].function.arguments;
+        } else {
+            res.json({ response_for_llm: "I couldn't understand what place you are looking for. Can you rephrase that?" });
+            return;
+        }
+
+        console.log("🛠️ Llama 3.1 Tool Called Params:", extractedParams);
+
+        const mapsRes = await fetch(`http://localhost:${process.env.PORT || 8080}/api/get-location`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(extractedParams)
+        });
+
+        const mapsData = await mapsRes.json();
+        res.json({ response_for_llm: mapsData.response_for_llm });
+
+    } catch (error) {
+        console.error("AI Chat Error:", error);
+        res.status(500).json({ response_for_llm: "⚠️ Sorry, my AI brain (Ollama) is currently unreachable." });
     }
 };

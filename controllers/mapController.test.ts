@@ -1,4 +1,4 @@
-import { getLocation, getRoute } from './mapController';
+import { getLocation, getRoute, chatWithAI } from './mapController';
 import { createRequest, createResponse } from 'node-mocks-http';
 
 global.fetch = jest.fn();
@@ -7,6 +7,10 @@ describe('Map Controllers', () => {
     beforeEach(() => {
         jest.clearAllMocks();
         process.env.GOOGLE_MAPS_API_KEY = 'FAKE_KEY';
+        process.env.PORT = '8080';
+
+        jest.spyOn(console, 'error').mockImplementation(() => {});
+        jest.spyOn(console, 'log').mockImplementation(() => {});
     });
 
     describe('getLocation Controller', () => {
@@ -149,6 +153,85 @@ describe('Map Controllers', () => {
             expect(data.response_for_llm).toContain('150 km');
             expect(data.response_for_llm).toContain('2 hours 30 mins');
             expect(data.response_for_llm).toContain('Jakarta, Indonesia');
+        });
+    });
+
+    describe('chatWithAI Controller', () => {
+        it('should return 400 if prompt is missing', async () => {
+            const req = createRequest({ method: 'POST', body: {} });
+            const res = createResponse();
+
+            await chatWithAI(req, res);
+
+            expect(res.statusCode).toBe(400);
+            expect(res._getJSONData()).toEqual({ error: 'Prompt is required' });
+        });
+
+        it('should return an error message if Ollama fetch fails', async () => {
+            const req = createRequest({ method: 'POST', body: { prompt: 'Find me seafood' } });
+            const res = createResponse();
+
+            (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network Error'));
+
+            await chatWithAI(req, res);
+
+            expect(res.statusCode).toBe(500);
+            expect(res._getJSONData().response_for_llm).toContain('unreachable');
+        });
+
+        it('should return a fallback message if Llama does not use tool calls', async () => {
+            const req = createRequest({ method: 'POST', body: { prompt: 'Just saying hello' } });
+            const res = createResponse();
+
+            (global.fetch as jest.Mock).mockResolvedValueOnce({
+                ok: true,
+                json: jest.fn().mockResolvedValueOnce({
+                    message: { content: "Hello there!", tool_calls: [] }
+                })
+            });
+
+            await chatWithAI(req, res);
+
+            expect(res.statusCode).toBe(200);
+            expect(res._getJSONData().response_for_llm).toContain("I couldn't understand what place you are looking for");
+        });
+
+        it('should extract parameters and fetch location data successfully', async () => {
+            const req = createRequest({ method: 'POST', body: { prompt: 'where the best seafood at batam?' } });
+            const res = createResponse();
+
+            (global.fetch as jest.Mock).mockImplementation((url: string) => {
+                if (url.includes('11434/api/chat')) {
+                    return Promise.resolve({
+                        ok: true,
+                        json: () => Promise.resolve({
+                            message: {
+                                tool_calls: [{
+                                    function: {
+                                        arguments: { place_type: 'seafood', location: 'Batam' }
+                                    }
+                                }]
+                            }
+                        })
+                    });
+                }
+                if (url.includes('api/get-location')) {
+                    return Promise.resolve({
+                        ok: true,
+                        json: () => Promise.resolve({
+                            response_for_llm: 'Here is the seafood map: [Map Link]'
+                        })
+                    });
+                }
+                return Promise.resolve({ json: () => Promise.resolve({}) });
+            });
+
+            await chatWithAI(req, res);
+
+            expect(res.statusCode).toBe(200);
+            const data = res._getJSONData();
+
+            expect(data.response_for_llm).toBe('Here is the seafood map: [Map Link]');
         });
     });
 });
