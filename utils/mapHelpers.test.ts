@@ -1,4 +1,5 @@
-import { formatPrice, formatReview, getApiKey } from './mapHelpers';
+import type { GooglePlace } from '../types/map.types';
+import { formatPrice, formatReview, getApiKey, generateStaticMapUrl } from './mapHelpers';
 
 describe('Map Helpers Utilities', () => {
     
@@ -57,6 +58,35 @@ describe('Map Helpers Utilities', () => {
         it('should throw an error if the API Key is missing', () => {
             delete process.env.GOOGLE_MAPS_API_KEY;
             expect(() => getApiKey()).toThrow('GOOGLE_MAPS_API_KEY is not configured in the .env file');
+        });
+    });
+
+    describe('generateStaticMapUrl', () => {
+        it('should return the correct static map URL if geometry is present', () => {
+            const mockPlace = {
+                place_id: '123',
+                name: 'Test Cafe',
+                formatted_address: '123 Test St',
+                geometry: {
+                    location: { lat: 1.123, lng: 104.045 }
+                }
+            } as GooglePlace;
+            
+            const url = generateStaticMapUrl(mockPlace, 'FAKE_KEY');
+            expect(url).toContain('https://maps.googleapis.com/maps/api/staticmap');
+            expect(url).toContain('center=1.123%2C104.045');
+            expect(url).toContain('key=FAKE_KEY');
+        });
+
+        it('should return an empty string if geometry is missing', () => {
+            const mockPlace = {
+                place_id: '123',
+                name: 'Test Cafe',
+                formatted_address: '123 Test St'
+            } as GooglePlace;
+            
+            const url = generateStaticMapUrl(mockPlace, 'FAKE_KEY');
+            expect(url).toBe('');
         });
     });
 });
