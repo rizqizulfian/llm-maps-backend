@@ -234,4 +234,64 @@ describe('Map Controllers', () => {
             expect(data.response_for_llm).toBe('Here is the seafood map: [Map Link]');
         });
     });
+
+    describe('chatWithAI Controller', () => {
+        it('should return 400 if prompt is missing', async () => {
+            const req = createRequest({ method: 'POST', body: {} });
+            const res = createResponse();
+            
+            await chatWithAI(req, res);
+            
+            expect(res.statusCode).toBe(400);
+            expect(res._getJSONData()).toEqual({ error: 'Prompt is required' });
+        });
+
+        it('should return an error message if Ollama fetch fails', async () => {
+            const req = createRequest({ method: 'POST', body: { prompt: 'Hello' } });
+            const res = createResponse();
+            
+            (global.fetch as jest.Mock).mockRejectedValueOnce(new Error('Network Error'));
+            
+            await chatWithAI(req, res);
+            
+            expect(res.statusCode).toBe(500);
+            expect(res._getJSONData().response_for_llm).toContain('unreachable');
+        });
+
+        it('should return the general AI response if Llama answers conversationally', async () => {
+            const req = createRequest({ method: 'POST', body: { prompt: 'Why is the sky blue?' } });
+            const res = createResponse();
+            
+            (global.fetch as jest.Mock).mockResolvedValueOnce({
+                ok: true,
+                json: jest.fn().mockResolvedValueOnce({
+                    message: { content: "The sky is blue because of Rayleigh scattering." }
+                })
+            });
+            
+            await chatWithAI(req, res);
+            
+            expect(res.statusCode).toBe(200);
+            expect(res._getJSONData().response_for_llm).toBe("The sky is blue because of Rayleigh scattering.");
+        });
+
+        it('should strip hallucinated JSON signature from general conversational reply', async () => {
+            const req = createRequest({ method: 'POST', body: { prompt: 'Why is the sky blue?' } });
+            const res = createResponse();
+
+            const hallucinatedResponse = 'The sky is blue. {"name": "search_google_maps", "parameters": {"location": "Batam"}}';
+            
+            (global.fetch as jest.Mock).mockResolvedValueOnce({
+                ok: true,
+                json: jest.fn().mockResolvedValueOnce({
+                    message: { content: hallucinatedResponse }
+                })
+            });
+            
+            await chatWithAI(req, res);
+            
+            expect(res.statusCode).toBe(200);
+            expect(res._getJSONData().response_for_llm).toBe("The sky is blue.");
+        });
+    });
 });

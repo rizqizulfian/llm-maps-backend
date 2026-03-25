@@ -1,5 +1,3 @@
-// controllers/mapController.ts
-
 import type { Request, Response } from 'express';
 import type { LocationRequestBody, RouteRequestBody, GooglePlace } from '../types/map.types';
 import { formatPrice, formatReview, getApiKey, generateStaticMapUrl, generateEmbedMapIframe } from '../utils/mapHelpers';
@@ -145,23 +143,31 @@ export const chatWithAI = async (req: Request, res: Response): Promise<void> => 
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 model: 'llama3.1',
-                messages: [{ role: 'user', content: prompt }],
+                messages: [
+                    {
+                        role: 'system',
+                        content: `You are a helpful and intelligent AI assistant. 
+                        RULE 1: If the user asks for places, restaurants, cafes, locations, or directions, you MUST use the 'search_google_maps' tool.
+                        RULE 2: If the user asks a general question (e.g., science, coding, casual chat, "why is the sky blue"), you MUST NOT use the tool. Simply answer the question conversationally in Markdown format. DO NOT output any JSON if you are answering conversationally.`
+                    },
+                    { role: 'user', content: prompt }
+                ],
                 stream: false,
                 tools: [{
                     type: "function",
                     function: {
                         name: "search_google_maps",
-                        description: "Extract the exact search query parameters from the user's request.",
+                        description: "Search for places or locations on Google Maps.",
                         parameters: {
                             type: "object",
                             properties: {
                                 place_type: {
                                     type: "string",
-                                    description: "The EXACT raw food type, place name, or activity the user wants. Preserve the exact words (e.g., 'seafood', 'nasi padang', 'tukang cukur'). NEVER generalize or change the word to 'restaurant' or 'place'."
+                                    description: "The EXACT specific place, food, or activity requested (e.g., 'seafood', 'nasi padang')."
                                 },
                                 location: {
                                     type: "string",
-                                    description: "The city, district, or area. If none is mentioned, default to 'Batam'."
+                                    description: "The city or area. Default is 'Batam' if none provided."
                                 }
                             },
                             required: ["place_type", "location"]
@@ -174,25 +180,36 @@ export const chatWithAI = async (req: Request, res: Response): Promise<void> => 
         if (!ollamaRes.ok) throw new Error('Ollama is not responding');
         
         const ollamaData = await ollamaRes.json();
-
-        let extractedParams;
+        
         if (ollamaData.message?.tool_calls && ollamaData.message.tool_calls.length > 0) {
-            extractedParams = ollamaData.message.tool_calls[0].function.arguments;
+            
+            const extractedParams = ollamaData.message.tool_calls[0].function.arguments;
+            console.log("🛠️ Llama 3.1 Tool Called Params:", extractedParams);
+
+            const mapsRes = await fetch(`http://localhost:${process.env.PORT || 8080}/api/get-location`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(extractedParams)
+            });
+
+            const mapsData = await mapsRes.json();
+            res.json({ response_for_llm: mapsData.response_for_llm });
+
+        } else if (ollamaData.message?.content) {
+            
+            let generalReply = ollamaData.message.content;
+            const jsonSignature = '{"name": "search_google_maps"';
+            if (generalReply.includes(jsonSignature)) {
+                generalReply = generalReply.split(jsonSignature)[0];
+            }
+            generalReply = generalReply.trim();
+
+            console.log("💬 Llama 3.1 General Reply:", generalReply);
+            res.json({ response_for_llm: generalReply });
+            
         } else {
-            res.json({ response_for_llm: "I couldn't understand what place you are looking for. Can you rephrase that?" });
-            return;
+            res.json({ response_for_llm: "I'm a bit confused. Could you rephrase your question?" });
         }
-
-        console.log("🛠️ Llama 3.1 Tool Called Params:", extractedParams);
-
-        const mapsRes = await fetch(`http://localhost:${process.env.PORT || 8080}/api/get-location`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(extractedParams)
-        });
-
-        const mapsData = await mapsRes.json();
-        res.json({ response_for_llm: mapsData.response_for_llm });
 
     } catch (error) {
         console.error("AI Chat Error:", error);
