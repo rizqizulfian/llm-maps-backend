@@ -42,7 +42,7 @@ describe('Map Controllers', () => {
             expect(data.response_for_llm).toContain('Sorry, could not find any');
         });
 
-        it('should successfully assemble markdown including the static map for the top result', async () => {
+        it('should successfully assemble markdown including both static and interactive maps for the top result', async () => {
             const req = createRequest({
                 method: 'POST',
                 body: { location: 'Batam', place_type: 'Cafe' }
@@ -93,9 +93,13 @@ describe('Map Controllers', () => {
             expect(data.success).toBe(true);
             expect(data.response_for_llm).toContain('Top Cafe Batam');
             expect(data.response_for_llm).toContain('Second Cafe Batam');
-
+            
             expect(data.response_for_llm).toContain('https://maps.googleapis.com/maps/api/staticmap');
             expect(data.response_for_llm).toContain('center=1.1%2C104.1');
+
+            expect(data.response_for_llm).toContain('<iframe');
+            expect(data.response_for_llm).toContain('Top Result Maps');
+            expect(data.response_for_llm).toContain('Interactive Map:');
         });
     });
 

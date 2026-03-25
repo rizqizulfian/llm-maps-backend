@@ -1,5 +1,11 @@
 import type { GooglePlace } from '../types/map.types';
-import { formatPrice, formatReview, getApiKey, generateStaticMapUrl } from './mapHelpers';
+import {
+    getApiKey,
+    formatPrice,
+    formatReview,
+    generateStaticMapUrl,
+    generateEmbedMapIframe
+} from './mapHelpers';
 
 describe('Map Helpers Utilities', () => {
     
@@ -87,6 +93,21 @@ describe('Map Helpers Utilities', () => {
             
             const url = generateStaticMapUrl(mockPlace, 'FAKE_KEY');
             expect(url).toBe('');
+        });
+    });
+
+    describe('generateEmbedMapIframe', () => {
+        it('should return the correct HTML iframe string', () => {
+            const mockPlace = {
+                name: 'Test Cafe',
+                formatted_address: '123 Test St',
+            } as GooglePlace;
+            
+            const iframe = generateEmbedMapIframe(mockPlace, 'FAKE_KEY');
+            expect(iframe).toContain('<iframe');
+            expect(iframe).toContain('https://www.google.com/maps/embed/v1/place');
+            expect(iframe).toContain('key=FAKE_KEY');
+            expect(iframe).toContain('q=Test%20Cafe%2C%20123%20Test%20St');
         });
     });
 });

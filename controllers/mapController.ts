@@ -2,7 +2,7 @@
 
 import type { Request, Response } from 'express';
 import type { LocationRequestBody, RouteRequestBody, GooglePlace } from '../types/map.types';
-import { formatPrice, formatReview, getApiKey, generateStaticMapUrl } from '../utils/mapHelpers';
+import { formatPrice, formatReview, getApiKey, generateStaticMapUrl, generateEmbedMapIframe } from '../utils/mapHelpers';
 
 export const getLocation = async (req: Request<{}, {}, LocationRequestBody>, res: Response): Promise<void> => {
     const { location, place_type } = req.body;
@@ -37,11 +37,18 @@ export const getLocation = async (req: Request<{}, {}, LocationRequestBody>, res
         let whatsappResult = `Here are the top 5 recommendations for *${place_type}* in *${location}*:\n\n`;
 
         detailedPlaces.forEach((item, index) => {
-            if (index === 0 && item.geometry) {
-                const staticMapUrl = generateStaticMapUrl(item, apiKey);
-                if (staticMapUrl) {
-                    markdownResult += `### 📍 Top Result Map\n\n![Map of ${item.name}](${staticMapUrl})\n\n---\n\n`;
+            if (index === 0) {
+                markdownResult += `### 📍 Top Result Maps\n\n`;
+
+                if (item.geometry) {
+                    const staticMapUrl = generateStaticMapUrl(item, apiKey);
+                    if (staticMapUrl) {
+                        markdownResult += `**Static Map Preview:**\n![Map of ${item.name}](${staticMapUrl})\n\n`;
+                    }
                 }
+
+                const iframeHtml = generateEmbedMapIframe(item, apiKey);
+                markdownResult += `**Interactive Map:**\n${iframeHtml}\n\n---\n\n`;
             }
 
             const ratingText = item.rating ? `${item.rating} ⭐ (${item.user_ratings_total})` : 'No rating yet';

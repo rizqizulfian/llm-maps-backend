@@ -38,3 +38,19 @@ export const generateStaticMapUrl = (place: GooglePlace, apiKey: string): string
 
     return `${baseUrl}?${params.join('&')}`;
 };
+
+export const generateEmbedMapIframe = (place: GooglePlace, apiKey: string): string => {
+    const query = encodeURIComponent(`${place.name}, ${place.formatted_address}`);
+
+    const embedUrl = `https://www.google.com/maps/embed/v1/place?key=${apiKey}&q=${query}`;
+    
+    return `<iframe 
+        width="100%" 
+        height="400" 
+        style="border:0; border-radius: 8px; margin-bottom: 15px;" 
+        loading="lazy" 
+        allowfullscreen 
+        referrerpolicy="no-referrer-when-downgrade" 
+        src="${embedUrl}">
+    </iframe>`;
+};
