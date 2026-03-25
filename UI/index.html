@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HeyTayo AI Assistant</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        .markdown-body p { margin-bottom: 0.25rem; color: #374151; }
+        .markdown-body hr { margin: 1rem 0; border-color: #e5e7eb; }
+
+        .markdown-body h3 {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            color: #1f2937;
+        }
+
+        .markdown-body p {
+            margin-bottom: 0.75rem;
+            color: #374151;
+        }
+
+        .markdown-body a {
+            color: #2563eb;
+            text-decoration: underline;
+            font-weight: 500;
+        }
+
+        .markdown-body a:hover {
+            color: #1d4ed8;
+        }
+
+        .markdown-body hr {
+            margin: 1.5rem 0;
+            border-color: #e5e7eb;
+        }
+
+        .markdown-body ul,
+        .markdown-body ol {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+            list-style-type: disc;
+        }
+
+        .markdown-body strong {
+            color: #111827;
+        }
+
+        .typing-indicator::after {
+            content: '...';
+            animation: typing 1.5s infinite steps(4, end);
+        }
+
+        @keyframes typing {
+
+            0%,
+            20% {
+                content: '';
+            }
+
+            40% {
+                content: '.';
+            }
+
+            60% {
+                content: '..';
+            }
+
+            80%,
+            100% {
+                content: '...';
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 h-screen flex flex-col font-sans">
+
+    <header class="bg-white border-b py-4 px-6 shadow-sm flex-shrink-0 z-10">
+        <div class="max-w-4xl mx-auto flex items-center gap-3">
+            <span class="text-2xl">🗺️</span>
+            <div>
+                <h1 class="text-xl font-bold text-gray-800">HeyTayo AI Assistant</h1>
+                <p class="text-sm text-gray-500">Superb AI</p>
+            </div>
+        </div>
+    </header>
+
+    <main id="chatBox" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 max-w-4xl mx-auto w-full scroll-smooth">
+        <div class="flex gap-4">
+            <div
+                class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-xl flex-shrink-0 shadow-sm">
+                🤖</div>
+            <div class="bg-white border rounded-2xl rounded-tl-none px-6 py-4 max-w-[85%] shadow-sm">
+                <p class="text-gray-700">Hello! I am your AI Maps Assistant. Tell me what you are looking for and where.
+                </p>
+                <p class="text-sm text-gray-500 mt-2 font-medium">Try typing: "Find me a cozy cafe in Bandung" or
+                    "The best place to eat in Batam "</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-white border-t p-4 sm:p-6 flex-shrink-0">
+        <form id="chatForm" class="max-w-4xl mx-auto relative flex items-center">
+            <input type="text" id="promptInput" placeholder="Ask for recommendations (e.g., 'Where to go eat in Bandung?')..."
+                class="w-full bg-gray-100 border-transparent focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-full py-4 pl-6 pr-16 text-gray-700 outline-none transition-all shadow-sm"
+                required autocomplete="off">
+            <button type="submit" id="sendBtn"
+                class="absolute right-2 bg-blue-600 hover:bg-blue-700 text-white w-10 h-10 rounded-full flex items-center justify-center transition-transform hover:scale-105 disabled:bg-gray-400 disabled:scale-100">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 ml-1">
+                    <path
+                        d="M3.478 2.404a.75.75 0 00-.926.941l2.432 7.905H13.5a.75.75 0 010 1.5H4.984l-2.432 7.905a.75.75 0 00.926.94 60.519 60.519 0 0018.445-8.986.75.75 0 000-1.218A60.517 60.517 0 003.478 2.404z" />
+                </svg>
+            </button>
+        </form>
+    </footer>
+
+    <script>
+        marked.use({
+            gfm: true,
+            breaks: true 
+        });
+
+        const chatBox = document.getElementById('chatBox');
+        const chatForm = document.getElementById('chatForm');
+        const promptInput = document.getElementById('promptInput');
+        const sendBtn = document.getElementById('sendBtn');
+
+        const scrollToBottom = () => chatBox.scrollTop = chatBox.scrollHeight;
+
+        const appendMessage = (sender, content, isMarkdown = false) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = sender === 'user' ? 'flex gap-4 flex-row-reverse' : 'flex gap-4';
+
+            const avatar = document.createElement('div');
+            avatar.className = sender === 'user'
+                ? 'w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-xl flex-shrink-0 shadow-sm'
+                : 'w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-xl flex-shrink-0 shadow-sm';
+            avatar.innerText = sender === 'user' ? '👤' : '🤖';
+
+            const bubble = document.createElement('div');
+            bubble.className = sender === 'user'
+                ? 'bg-blue-600 text-white rounded-2xl rounded-tr-none px-6 py-4 max-w-[85%] shadow-sm'
+                : 'bg-white border text-gray-800 rounded-2xl rounded-tl-none px-6 py-4 max-w-[85%] shadow-sm';
+
+            if (isMarkdown) {
+                bubble.classList.add('markdown-body');
+                bubble.innerHTML = marked.parse(content);
+            } else {
+                bubble.innerHTML = `<p>${content}</p>`;
+            }
+
+            wrapper.appendChild(avatar);
+            wrapper.appendChild(bubble);
+            chatBox.appendChild(wrapper);
+            scrollToBottom();
+
+            return bubble;
+        };
+
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const rawPrompt = promptInput.value.trim();
+            if (!rawPrompt) return;
+
+            appendMessage('user', rawPrompt);
+            promptInput.value = '';
+
+            sendBtn.disabled = true;
+            const loadingBubble = appendMessage('ai', '<span class="text-blue-500 font-semibold typing-indicator">Thinking & Searching maps</span>');
+
+            try {
+                const response = await fetch('http://localhost:8080/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt: rawPrompt })
+                });
+
+                if (!response.ok) throw new Error('Network error');
+
+                const data = await response.json();
+
+                loadingBubble.classList.add('markdown-body');
+                loadingBubble.innerHTML = marked.parse(data.response_for_llm);
+
+                const links = loadingBubble.querySelectorAll('a');
+                links.forEach(link => {
+                    link.setAttribute('target', '_blank');
+                    link.setAttribute('rel', 'noopener noreferrer');
+                });
+
+            } catch (error) {
+                console.error(error);
+                loadingBubble.innerHTML = '<p class="text-red-500">❌ Failed to connect to Backend/LLM. Is Ollama running?</p>';
+            } finally {
+                sendBtn.disabled = false;
+                scrollToBottom();
+            }
+        });
+    </script>
+</body>
+
+</html>
